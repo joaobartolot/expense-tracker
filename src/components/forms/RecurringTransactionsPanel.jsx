@@ -1,35 +1,56 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card } from '../common/Card';
 import { todayISO } from '../../utils/date';
 import { CURRENCIES } from '../../data/constants';
 
 export function RecurringTransactionsPanel({ recurringRules, onApplyDue, onAddRule, categories, accounts, defaultCurrency }) {
+  const defaultExpenseCategory = useMemo(
+    () => categories.find((category) => category.type === 'expense')?.id,
+    [categories]
+  );
+
   const [form, setForm] = useState({
     description: '',
     amount: '',
     currency: defaultCurrency,
     type: 'expense',
     interval: 'monthly',
-    categoryId: categories[0]?.id,
+    categoryId: defaultExpenseCategory,
     accountId: accounts[0]?.id,
     nextDate: todayISO(),
   });
 
+  const categoryOptions = useMemo(
+    () => categories.filter((category) => category.type === form.type),
+    [categories, form.type]
+  );
+
+  useEffect(() => {
+    setForm((prev) => ({ ...prev, currency: defaultCurrency }));
+  }, [defaultCurrency]);
+
+  useEffect(() => {
+    if (!categoryOptions.find((category) => category.id === form.categoryId)) {
+      setForm((prev) => ({ ...prev, categoryId: categoryOptions[0]?.id }));
+    }
+  }, [categoryOptions, form.categoryId]);
+
   function submitRecurring(event) {
     event.preventDefault();
-    if (!form.description || !form.amount) return;
+    if (!form.description || !form.amount || !form.categoryId || !form.accountId) return;
 
     onAddRule({ ...form, amount: Number(form.amount) });
     setForm((prev) => ({ ...prev, description: '', amount: '' }));
   }
 
-  const categoryOptions = categories.filter((category) => category.type === form.type);
-
   return (
-    <Card title="Recurring Transactions" actions={<button onClick={onApplyDue} className="rounded bg-brand-500 px-3 py-1 text-sm text-white">Apply Due</button>}>
+    <Card
+      title="Recurring Transactions"
+      actions={<button type="button" onClick={onApplyDue} className="rounded bg-brand-500 px-3 py-1 text-sm text-white">Apply Due</button>}
+    >
       <form onSubmit={submitRecurring} className="grid gap-2">
-        <input className="rounded border p-2" placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-        <input className="rounded border p-2" type="number" step="0.01" placeholder="Amount" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+        <input required className="rounded border p-2" placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+        <input required className="rounded border p-2" type="number" min="0" step="0.01" placeholder="Amount" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
 
         <div className="grid grid-cols-2 gap-2">
           <select className="rounded border p-2" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
@@ -58,7 +79,7 @@ export function RecurringTransactionsPanel({ recurringRules, onApplyDue, onAddRu
           </select>
         </div>
 
-        <button className="rounded bg-slate-800 p-2 text-white">Add Recurring Rule</button>
+        <button type="submit" className="rounded bg-slate-800 p-2 text-white">Add Recurring Rule</button>
       </form>
 
       <ul className="mt-3 space-y-1 text-sm text-slate-600">

@@ -16,7 +16,7 @@ import { SettingsPanel } from '../components/settings/SettingsPanel';
 import { GoalsPanel } from '../components/goals/GoalsPanel';
 
 export function DashboardPage() {
-  const rates = useExchangeRates();
+  const { rates, status: exchangeRateStatus } = useExchangeRates();
   const { state, dispatch } = useFinanceState();
 
   const {
@@ -69,7 +69,7 @@ export function DashboardPage() {
           currency: defaultCurrency,
           type: 'expense',
           date: todayISO(),
-          categoryId: state.categories[0]?.id,
+          categoryId: state.categories.find((category) => category.type === 'expense')?.id,
           accountId: state.accounts[0]?.id,
         },
       },
@@ -124,6 +124,7 @@ export function DashboardPage() {
 
         <SettingsPanel
           defaultCurrency={defaultCurrency}
+          exchangeRateStatus={exchangeRateStatus}
           onChangeDefaultCurrency={(currency) => dispatch({ type: financeActions.setDefaultCurrency, payload: currency })}
         />
       </section>

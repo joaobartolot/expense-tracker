@@ -3,6 +3,7 @@ import { FALLBACK_RATES } from '../data/constants';
 
 export function useExchangeRates() {
   const [rates, setRates] = useState({ USD: 1 });
+  const [status, setStatus] = useState('loading');
 
   useEffect(() => {
     let active = true;
@@ -10,10 +11,19 @@ export function useExchangeRates() {
     fetch('https://open.er-api.com/v6/latest/USD')
       .then((response) => response.json())
       .then((data) => {
-        if (active && data?.rates) setRates(data.rates);
+        if (!active) return;
+        if (data?.rates) {
+          setRates(data.rates);
+          setStatus('success');
+          return;
+        }
+        setRates(FALLBACK_RATES);
+        setStatus('fallback');
       })
       .catch(() => {
-        if (active) setRates(FALLBACK_RATES);
+        if (!active) return;
+        setRates(FALLBACK_RATES);
+        setStatus('fallback');
       });
 
     return () => {
@@ -21,5 +31,5 @@ export function useExchangeRates() {
     };
   }, []);
 
-  return rates;
+  return { rates, status };
 }
