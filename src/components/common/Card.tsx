@@ -2,17 +2,21 @@ import type { ReactNode } from 'react';
 
 interface CardProps {
     title: string;
+    subtitle?: string;
     actions?: ReactNode;
     children: ReactNode;
 }
 
-export function Card({ title, actions, children }: CardProps) {
+export function Card({ title, subtitle, actions, children }: CardProps) {
     return (
-        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800">
-                    {title}
-                </h2>
+        <section className="app-card p-5 sm:p-6">
+            <div className="mb-5 flex items-start justify-between gap-4">
+                <div>
+                    <h2 className="app-section-title">{title}</h2>
+                    {subtitle ? (
+                        <p className="mt-1 app-section-copy">{subtitle}</p>
+                    ) : null}
+                </div>
                 {actions}
             </div>
             {children}

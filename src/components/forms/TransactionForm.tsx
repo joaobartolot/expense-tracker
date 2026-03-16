@@ -1,6 +1,8 @@
 import { useMemo, useState, type FormEvent } from 'react';
+import { ArrowUpDown, Plus } from 'lucide-react';
 import { CURRENCIES } from '../../data/constants';
 import { todayISO } from '../../utils/date';
+import { CategoryIcon } from '../common/CategoryIcon';
 import { Card } from '../common/Card';
 import type {
     Account,
@@ -89,12 +91,19 @@ export function TransactionForm({
         setForm((prev) => ({ ...prev, description: '', amount: '' }));
     }
 
+    const selectedCategory = categories.find(
+        (category) => category.id === selectedCategoryId,
+    );
+
     return (
-        <Card title="Add Transaction">
-            <form onSubmit={handleSubmit} className="grid gap-3 md:grid-cols-3">
+        <Card
+            title="New Transaction"
+            subtitle="Capture spending and income without leaving the flow."
+        >
+            <form onSubmit={handleSubmit} className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 <input
                     required
-                    className="rounded border p-2"
+                    className="app-input"
                     placeholder="Description"
                     value={form.description}
                     onChange={(event) =>
@@ -103,7 +112,7 @@ export function TransactionForm({
                 />
                 <input
                     required
-                    className="rounded border p-2"
+                    className="app-input"
                     type="number"
                     min="0"
                     step="0.01"
@@ -115,7 +124,7 @@ export function TransactionForm({
                 />
                 <input
                     required
-                    className="rounded border p-2"
+                    className="app-input"
                     type="date"
                     value={form.date}
                     onChange={(event) =>
@@ -124,7 +133,7 @@ export function TransactionForm({
                 />
 
                 <select
-                    className="rounded border p-2"
+                    className="app-select"
                     value={form.type}
                     onChange={(event) =>
                         setForm({
@@ -138,7 +147,7 @@ export function TransactionForm({
                 </select>
 
                 <select
-                    className="rounded border p-2"
+                    className="app-select"
                     value={selectedCurrency}
                     onChange={(event) =>
                         setForm({
@@ -155,7 +164,7 @@ export function TransactionForm({
                 </select>
 
                 <select
-                    className="rounded border p-2"
+                    className="app-select"
                     value={selectedAccountId}
                     onChange={(event) =>
                         setForm({ ...form, accountId: event.target.value })
@@ -168,25 +177,40 @@ export function TransactionForm({
                     ))}
                 </select>
 
-                <select
-                    className="rounded border p-2 md:col-span-2"
-                    value={selectedCategoryId}
-                    onChange={(event) =>
-                        setForm({ ...form, categoryId: event.target.value })
-                    }
-                >
-                    {categoryOptions.map((category) => (
-                        <option key={category.id} value={category.id}>
-                            {category.icon} {category.name}
-                        </option>
-                    ))}
-                </select>
+                <label className="md:col-span-2 xl:col-span-2">
+                    <span className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                        <ArrowUpDown className="h-3.5 w-3.5" />
+                        Category
+                    </span>
+                    <div className="flex items-center gap-3 rounded-2xl border border-app-line bg-white px-4 py-3">
+                        <div className="rounded-2xl bg-brand-50 p-2.5 text-brand-500">
+                            <CategoryIcon
+                                iconKey={selectedCategory?.icon}
+                                className="h-4 w-4"
+                            />
+                        </div>
+                        <select
+                            className="w-full bg-transparent text-sm text-slate-900 outline-none"
+                            value={selectedCategoryId}
+                            onChange={(event) =>
+                                setForm({ ...form, categoryId: event.target.value })
+                            }
+                        >
+                            {categoryOptions.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                    {category.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </label>
 
                 <button
                     type="submit"
-                    className="rounded bg-brand-500 px-4 py-2 font-medium text-white hover:bg-brand-700"
+                    className="app-button-primary"
                 >
-                    Add
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add transaction
                 </button>
             </form>
         </Card>

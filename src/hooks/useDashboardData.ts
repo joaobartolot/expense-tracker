@@ -54,9 +54,7 @@ export function useDashboardData(state: FinanceState, rates: ExchangeRates) {
                 const category = state.categories.find(
                     (item) => item.id === transaction.categoryId,
                 );
-                const label = category
-                    ? `${category.icon} ${category.name}`
-                    : 'Uncategorized';
+                const label = category?.name ?? 'Uncategorized';
 
                 totals[label] = (totals[label] || 0) + transaction.converted;
             });

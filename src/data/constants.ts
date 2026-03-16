@@ -13,12 +13,17 @@ export const CURRENCIES = [
 ] as const satisfies readonly Currency[];
 
 export const DEFAULT_CATEGORIES: Category[] = [
-    { id: 'cat-food', name: 'Food', icon: '🍔', type: 'expense' },
-    { id: 'cat-rent', name: 'Rent', icon: '🏠', type: 'expense' },
-    { id: 'cat-transport', name: 'Transport', icon: '🚌', type: 'expense' },
-    { id: 'cat-health', name: 'Health', icon: '💊', type: 'expense' },
-    { id: 'cat-salary', name: 'Salary', icon: '💼', type: 'income' },
-    { id: 'cat-freelance', name: 'Freelance', icon: '🧑‍💻', type: 'income' },
+    { id: 'cat-food', name: 'Food', icon: 'utensils', type: 'expense' },
+    { id: 'cat-rent', name: 'Rent', icon: 'house', type: 'expense' },
+    { id: 'cat-transport', name: 'Transport', icon: 'bus', type: 'expense' },
+    { id: 'cat-health', name: 'Health', icon: 'health', type: 'expense' },
+    { id: 'cat-salary', name: 'Salary', icon: 'salary', type: 'income' },
+    {
+        id: 'cat-freelance',
+        name: 'Freelance',
+        icon: 'freelance',
+        type: 'income',
+    },
 ];
 
 export const FALLBACK_RATES: ExchangeRates = {

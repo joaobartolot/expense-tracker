@@ -1,4 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react';
+import { CalendarSync, RefreshCw } from 'lucide-react';
+import { CategoryIcon } from '../common/CategoryIcon';
 import { Card } from '../common/Card';
 import { todayISO } from '../../utils/date';
 import { CURRENCIES } from '../../data/constants';
@@ -95,15 +97,21 @@ export function RecurringTransactionsPanel({
         setForm((prev) => ({ ...prev, description: '', amount: '' }));
     }
 
+    const selectedCategory = categories.find(
+        (category) => category.id === selectedCategoryId,
+    );
+
     return (
         <Card
             title="Recurring Transactions"
+            subtitle="Automate the transfers and expenses you expect every cycle."
             actions={
                 <button
                     type="button"
                     onClick={onApplyDue}
-                    className="rounded bg-brand-500 px-3 py-1 text-sm text-white"
+                    className="app-button-primary px-3 py-2 text-sm"
                 >
+                    <RefreshCw className="mr-2 h-4 w-4" />
                     Apply Due
                 </button>
             }
@@ -111,7 +119,7 @@ export function RecurringTransactionsPanel({
             <form onSubmit={submitRecurring} className="grid gap-2">
                 <input
                     required
-                    className="rounded border p-2"
+                    className="app-input"
                     placeholder="Description"
                     value={form.description}
                     onChange={(event) =>
@@ -120,7 +128,7 @@ export function RecurringTransactionsPanel({
                 />
                 <input
                     required
-                    className="rounded border p-2"
+                    className="app-input"
                     type="number"
                     min="0"
                     step="0.01"
@@ -133,7 +141,7 @@ export function RecurringTransactionsPanel({
 
                 <div className="grid grid-cols-2 gap-2">
                     <select
-                        className="rounded border p-2"
+                        className="app-select"
                         value={form.type}
                         onChange={(event) =>
                             setForm({
@@ -146,7 +154,7 @@ export function RecurringTransactionsPanel({
                         <option value="income">Income</option>
                     </select>
                     <select
-                        className="rounded border p-2"
+                        className="app-select"
                         value={form.interval}
                         onChange={(event) =>
                             setForm({
@@ -163,7 +171,7 @@ export function RecurringTransactionsPanel({
 
                 <div className="grid grid-cols-2 gap-2">
                     <select
-                        className="rounded border p-2"
+                        className="app-select"
                         value={selectedCurrency}
                         onChange={(event) =>
                             setForm({
@@ -179,7 +187,7 @@ export function RecurringTransactionsPanel({
                         ))}
                     </select>
                     <input
-                        className="rounded border p-2"
+                        className="app-input"
                         type="date"
                         value={form.nextDate}
                         onChange={(event) =>
@@ -190,7 +198,7 @@ export function RecurringTransactionsPanel({
 
                 <div className="grid grid-cols-2 gap-2">
                     <select
-                        className="rounded border p-2"
+                        className="app-select"
                         value={selectedAccountId}
                         onChange={(event) =>
                             setForm({ ...form, accountId: event.target.value })
@@ -200,36 +208,52 @@ export function RecurringTransactionsPanel({
                             <option key={account.id} value={account.id}>
                                 {account.name}
                             </option>
-                        ))}
+                            ))}
                     </select>
-                    <select
-                        className="rounded border p-2"
-                        value={selectedCategoryId}
-                        onChange={(event) =>
-                            setForm({ ...form, categoryId: event.target.value })
-                        }
-                    >
-                        {categoryOptions.map((category) => (
-                            <option key={category.id} value={category.id}>
-                                {category.icon} {category.name}
-                            </option>
-                        ))}
-                    </select>
+                    <div className="flex items-center gap-3 rounded-2xl border border-app-line bg-white px-4 py-3">
+                        <div className="rounded-2xl bg-brand-50 p-2.5 text-brand-500">
+                            <CategoryIcon
+                                iconKey={selectedCategory?.icon}
+                                className="h-4 w-4"
+                            />
+                        </div>
+                        <select
+                            className="w-full bg-transparent text-sm text-slate-900 outline-none"
+                            value={selectedCategoryId}
+                            onChange={(event) =>
+                                setForm({ ...form, categoryId: event.target.value })
+                            }
+                        >
+                            {categoryOptions.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                    {category.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 <button
                     type="submit"
-                    className="rounded bg-slate-800 p-2 text-white"
+                    className="app-button-secondary"
                 >
+                    <CalendarSync className="mr-2 h-4 w-4" />
                     Add Recurring Rule
                 </button>
             </form>
 
-            <ul className="mt-3 space-y-1 text-sm text-slate-600">
+            <ul className="mt-4 space-y-3 text-sm text-slate-600">
                 {recurringRules.map((rule) => (
-                    <li key={rule.id}>
-                        • {rule.description} ({rule.interval}) next:{' '}
-                        {rule.nextDate}
+                    <li
+                        key={rule.id}
+                        className="rounded-2xl bg-slate-50 px-4 py-3"
+                    >
+                        <p className="font-semibold text-slate-900">
+                            {rule.description}
+                        </p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">
+                            {rule.interval} • next run {rule.nextDate}
+                        </p>
                     </li>
                 ))}
             </ul>

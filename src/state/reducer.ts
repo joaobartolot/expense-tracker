@@ -13,6 +13,24 @@ export function financeReducer(
                 transactions: [action.payload, ...state.transactions],
             };
 
+        case financeActions.updateTransaction:
+            return {
+                ...state,
+                transactions: state.transactions.map((transaction) =>
+                    transaction.id === action.payload.id
+                        ? action.payload
+                        : transaction,
+                ),
+            };
+
+        case financeActions.deleteTransaction:
+            return {
+                ...state,
+                transactions: state.transactions.filter(
+                    (transaction) => transaction.id !== action.payload,
+                ),
+            };
+
         case financeActions.addAccount:
             return {
                 ...state,
@@ -23,6 +41,22 @@ export function financeReducer(
             return {
                 ...state,
                 categories: [...state.categories, action.payload],
+            };
+
+        case financeActions.updateCategory:
+            return {
+                ...state,
+                categories: state.categories.map((category) =>
+                    category.id === action.payload.id ? action.payload : category,
+                ),
+            };
+
+        case financeActions.deleteCategory:
+            return {
+                ...state,
+                categories: state.categories.filter(
+                    (category) => category.id !== action.payload,
+                ),
             };
 
         case financeActions.addGoal:
@@ -53,6 +87,22 @@ export function financeReducer(
             return {
                 ...state,
                 recurringRules: [...state.recurringRules, action.payload],
+            };
+
+        case financeActions.updateRecurringRule:
+            return {
+                ...state,
+                recurringRules: state.recurringRules.map((rule) =>
+                    rule.id === action.payload.id ? action.payload : rule,
+                ),
+            };
+
+        case financeActions.deleteRecurringRule:
+            return {
+                ...state,
+                recurringRules: state.recurringRules.filter(
+                    (rule) => rule.id !== action.payload,
+                ),
             };
 
         case financeActions.applyRecurringDue: {

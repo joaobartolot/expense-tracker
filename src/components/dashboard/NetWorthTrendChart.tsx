@@ -12,15 +12,18 @@ export function NetWorthTrendChart({ points }: NetWorthTrendChartProps) {
     );
 
     return (
-        <Card title="Net Worth Trend">
-            <div className="flex h-36 items-end gap-2">
+        <Card
+            title="Net Worth Trend"
+            subtitle="Six-month balance movement in your default currency."
+        >
+            <div className="flex h-44 items-end gap-3">
                 {points.map((point) => (
                     <div
                         key={point.label}
-                        className="flex flex-1 flex-col items-center gap-1"
+                        className="flex flex-1 flex-col items-center gap-2"
                     >
                         <div
-                            className="w-full rounded-t bg-slate-800"
+                            className="w-full rounded-t-[18px] bg-gradient-to-t from-slate-900 via-brand-600 to-brand-500"
                             style={{
                                 height:
                                     point.value === 0
@@ -28,7 +31,7 @@ export function NetWorthTrendChart({ points }: NetWorthTrendChartProps) {
                                         : `${Math.max(6, (Math.abs(point.value) / maxValue) * 100)}%`,
                             }}
                         />
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs font-medium text-slate-500">
                             {point.label}
                         </span>
                     </div>

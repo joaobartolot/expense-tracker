@@ -1,3 +1,4 @@
+import { BadgeDollarSign, Globe } from 'lucide-react';
 import { Card } from '../common/Card';
 import { CURRENCIES } from '../../data/constants';
 import type { Currency, ExchangeRateStatus } from '../../types/finance';
@@ -13,17 +14,28 @@ export function SettingsPanel({
     onChangeDefaultCurrency,
     exchangeRateStatus,
 }: SettingsPanelProps) {
+    const exchangeLabel =
+        exchangeRateStatus === 'success'
+            ? 'Live API'
+            : exchangeRateStatus === 'loading'
+              ? 'Loading live rates...'
+              : 'Fallback rates';
+
     return (
-        <Card title="Settings">
+        <Card
+            title="Settings"
+            subtitle="Choose how balances are normalized across the app."
+        >
             <label
                 htmlFor="default-currency"
-                className="mb-2 block text-sm text-slate-600"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700"
             >
+                <BadgeDollarSign className="h-4 w-4 text-brand-500" />
                 Default currency
             </label>
             <select
                 id="default-currency"
-                className="w-full rounded border p-2"
+                className="app-select"
                 value={defaultCurrency}
                 onChange={(event) =>
                     onChangeDefaultCurrency(event.target.value as Currency)
@@ -36,19 +48,20 @@ export function SettingsPanel({
                 ))}
             </select>
 
-            <p className="mt-3 text-xs text-slate-500">
+            <p className="mt-4 text-sm text-slate-500">
                 Transactions can be entered in any currency and are converted to
                 the default using current rates.
             </p>
 
-            <p className="mt-2 text-xs text-slate-500">
-                Exchange rates source:{' '}
-                {exchangeRateStatus === 'success'
-                    ? 'Live API'
-                    : exchangeRateStatus === 'loading'
-                      ? 'Loading live rates...'
-                      : 'Fallback rates'}
-            </p>
+            <div className="mt-5 rounded-2xl bg-slate-50 px-4 py-3">
+                <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                    <Globe className="h-3.5 w-3.5" />
+                    Exchange rates source
+                </p>
+                <p className="mt-2 text-sm font-medium text-slate-700">
+                    {exchangeLabel}
+                </p>
+            </div>
         </Card>
     );
 }
