@@ -361,14 +361,18 @@ export function DashboardPage() {
                             key={id}
                             type="button"
                             onClick={() => setActiveView(id)}
-                            className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-[20px] px-3 py-2 text-[11px] font-medium transition ${
+                            aria-label={label}
+                            className={`flex min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-[20px] px-2 py-2 text-[10px] font-medium leading-tight transition sm:px-3 ${
                                 activeView === id
                                     ? 'bg-brand-50 text-brand-600'
                                     : 'text-slate-500'
                             }`}
                         >
                             <Icon className="h-4 w-4" />
-                            <span className="truncate">{label}</span>
+                            <span className="sr-only">{label}</span>
+                            <span className="hidden w-full truncate text-center sm:block">
+                                {label}
+                            </span>
                         </button>
                     ))}
                 </div>
