@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
     ArrowUpDown,
@@ -41,6 +41,8 @@ interface ViewDefinition {
     Icon: LucideIcon;
 }
 
+type SwipeIntent = 'undecided' | 'horizontal' | 'vertical';
+
 const views: ViewDefinition[] = [
     { id: 'home', label: 'Home', Icon: LayoutDashboard },
     { id: 'transactions', label: 'Transactions', Icon: ArrowUpDown },
@@ -54,6 +56,31 @@ export function DashboardPage() {
     const { rates, status: exchangeRateStatus } = useExchangeRates();
     const { state, dispatch } = useFinanceState();
     const [activeView, setActiveView] = useState<ViewId>('home');
+    const [isDesktop, setIsDesktop] = useState(() =>
+        typeof window !== 'undefined'
+            ? window.matchMedia('(min-width: 1024px)').matches
+            : false,
+    );
+    const [isDragging, setIsDragging] = useState(false);
+    const [isSnapAnimating, setIsSnapAnimating] = useState(false);
+    const pagerRef = useRef<HTMLDivElement | null>(null);
+    const trackRef = useRef<HTMLDivElement | null>(null);
+    const indicatorRef = useRef<HTMLSpanElement | null>(null);
+    const containerWidthRef = useRef(0);
+    const activeIndexRef = useRef(0);
+    const snapTimeoutRef = useRef<number | null>(null);
+    const gestureRef = useRef({
+        pointerId: null as number | null,
+        startX: 0,
+        startY: 0,
+        lastX: 0,
+        previousX: 0,
+        lastMoveAt: 0,
+        previousMoveAt: 0,
+        offset: 0,
+        intent: 'undecided' as SwipeIntent,
+        isTracking: false,
+    });
 
     const {
         defaultCurrency,
@@ -79,6 +106,7 @@ export function DashboardPage() {
             ),
         [normalizedTransactions],
     );
+    const activeIndex = views.findIndex((view) => view.id === activeView);
 
     function addTransaction(transaction: Omit<Transaction, 'id'>) {
         dispatch({
@@ -197,8 +225,8 @@ export function DashboardPage() {
         });
     }
 
-    function renderPage() {
-        if (activeView === 'home') {
+    function renderPage(viewId: ViewId) {
+        if (viewId === 'home') {
             return (
                 <HomePage
                     balance={totalBalance}
@@ -220,7 +248,7 @@ export function DashboardPage() {
             );
         }
 
-        if (activeView === 'transactions') {
+        if (viewId === 'transactions') {
             return (
                 <TransactionsPage
                     accounts={state.accounts}
@@ -234,7 +262,7 @@ export function DashboardPage() {
             );
         }
 
-        if (activeView === 'categories') {
+        if (viewId === 'categories') {
             return (
                 <CategoriesPage
                     accounts={state.accounts}
@@ -252,7 +280,7 @@ export function DashboardPage() {
             );
         }
 
-        if (activeView === 'recurring') {
+        if (viewId === 'recurring') {
             return (
                 <RecurringPage
                     accounts={state.accounts}
@@ -269,7 +297,7 @@ export function DashboardPage() {
             );
         }
 
-        if (activeView === 'goals') {
+        if (viewId === 'goals') {
             return (
                 <GoalsPage
                     goals={state.goals}
@@ -281,20 +309,245 @@ export function DashboardPage() {
         }
 
         return (
-                <SettingsPage
-                    defaultCurrency={defaultCurrency}
-                    budgetCycleStartDay={budgetCycleStartDay}
-                    exchangeRateStatus={exchangeRateStatus}
-                    onChangeDefaultCurrency={(currency) =>
-                        dispatch({
-                            type: financeActions.setDefaultCurrency,
-                            payload: currency,
-                        })
-                    }
-                    onChangeBudgetCycleStartDay={setBudgetCycleStartDay}
-                />
-            );
+            <SettingsPage
+                defaultCurrency={defaultCurrency}
+                budgetCycleStartDay={budgetCycleStartDay}
+                exchangeRateStatus={exchangeRateStatus}
+                onChangeDefaultCurrency={(currency) =>
+                    dispatch({
+                        type: financeActions.setDefaultCurrency,
+                        payload: currency,
+                    })
+                }
+                onChangeBudgetCycleStartDay={setBudgetCycleStartDay}
+            />
+        );
+    }
+
+    function applySwipePosition(offset: number, index = activeIndexRef.current) {
+        const width =
+            containerWidthRef.current || pagerRef.current?.offsetWidth || 1;
+        const progress = Math.min(
+            views.length - 1,
+            Math.max(0, index - offset / width),
+        );
+
+        if (trackRef.current) {
+            trackRef.current.style.transform = `translate3d(${Math.round(
+                -index * width + offset,
+            )}px, 0, 0)`;
         }
+
+        if (indicatorRef.current) {
+            indicatorRef.current.style.transform = `translate3d(${progress * 100}%, 0, 0)`;
+        }
+    }
+
+    function finishSwipe(nextIndex: number) {
+        gestureRef.current.offset = 0;
+        setIsDragging(false);
+        setIsSnapAnimating(true);
+        setActiveView(views[nextIndex].id);
+    }
+
+    function jumpToView(viewId: ViewId) {
+        gestureRef.current.offset = 0;
+        setIsDragging(false);
+        setIsSnapAnimating(false);
+        setActiveView(viewId);
+    }
+
+    function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
+        if (isDesktop || event.touches.length !== 1) {
+            return;
+        }
+
+        const target = event.target as HTMLElement | null;
+
+        if (
+            target?.closest(
+                'button, input, select, textarea, a, [role="button"], [role="dialog"]',
+            )
+        ) {
+            return;
+        }
+
+        const touch = event.touches[0];
+        gestureRef.current = {
+            pointerId: touch.identifier,
+            startX: touch.clientX,
+            startY: touch.clientY,
+            lastX: touch.clientX,
+            previousX: touch.clientX,
+            lastMoveAt: performance.now(),
+            previousMoveAt: performance.now(),
+            offset: 0,
+            intent: 'undecided',
+            isTracking: true,
+        };
+    }
+
+    function handleTouchMove(event: React.TouchEvent<HTMLDivElement>) {
+        const gesture = gestureRef.current;
+
+        if (
+            isDesktop ||
+            !gesture.isTracking ||
+            event.touches.length !== 1 ||
+            event.touches[0].identifier !== gesture.pointerId
+        ) {
+            return;
+        }
+
+        const touch = event.touches[0];
+        const deltaX = touch.clientX - gesture.startX;
+        const deltaY = touch.clientY - gesture.startY;
+
+        if (gesture.intent === 'undecided') {
+            if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10) {
+                return;
+            }
+
+            gesture.intent =
+                Math.abs(deltaX) > Math.abs(deltaY) ? 'horizontal' : 'vertical';
+
+            if (gesture.intent === 'vertical') {
+                gesture.isTracking = false;
+                return;
+            }
+
+            setIsDragging(true);
+        }
+
+        if (gesture.intent !== 'horizontal') {
+            return;
+        }
+
+        event.preventDefault();
+
+        const atFirstView = activeIndexRef.current === 0;
+        const atLastView = activeIndexRef.current === views.length - 1;
+        const resistedOffset =
+            (atFirstView && deltaX > 0) || (atLastView && deltaX < 0)
+                ? deltaX * 0.35
+                : deltaX;
+
+        gesture.offset = resistedOffset;
+        gesture.previousX = gesture.lastX;
+        gesture.previousMoveAt = gesture.lastMoveAt;
+        gesture.lastX = touch.clientX;
+        gesture.lastMoveAt = performance.now();
+        applySwipePosition(resistedOffset);
+    }
+
+    function handleTouchEnd() {
+        const gesture = gestureRef.current;
+
+        if (!gesture.isTracking && gesture.intent !== 'horizontal') {
+            return;
+        }
+
+        const width = containerWidthRef.current || pagerRef.current?.offsetWidth || 1;
+        const elapsed = Math.max(1, gesture.lastMoveAt - gesture.previousMoveAt);
+        const velocity = (gesture.lastX - gesture.previousX) / elapsed;
+        const travelledRatio = Math.abs(gesture.offset) / width;
+        let nextIndex = activeIndexRef.current;
+
+        if (
+            travelledRatio > 0.18 ||
+            (Math.abs(gesture.offset) > 24 && Math.abs(velocity) > 0.45)
+        ) {
+            if (gesture.offset < 0) {
+                nextIndex = Math.min(views.length - 1, activeIndexRef.current + 1);
+            } else if (gesture.offset > 0) {
+                nextIndex = Math.max(0, activeIndexRef.current - 1);
+            }
+        }
+
+        gestureRef.current = {
+            pointerId: null,
+            startX: 0,
+            startY: 0,
+            lastX: 0,
+            previousX: 0,
+            lastMoveAt: 0,
+            previousMoveAt: 0,
+            offset: 0,
+            intent: 'undecided',
+            isTracking: false,
+        };
+
+        finishSwipe(nextIndex);
+    }
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(min-width: 1024px)');
+        const syncDesktop = (matches: boolean) => {
+            setIsDesktop(matches);
+            setIsDragging(false);
+            setIsSnapAnimating(false);
+        };
+
+        syncDesktop(mediaQuery.matches);
+
+        const handleChange = (event: MediaQueryListEvent) => {
+            syncDesktop(event.matches);
+        };
+
+        mediaQuery.addEventListener('change', handleChange);
+
+        return () => {
+            mediaQuery.removeEventListener('change', handleChange);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!pagerRef.current) {
+            return;
+        }
+
+        const updateWidth = () => {
+            containerWidthRef.current = pagerRef.current?.offsetWidth ?? 0;
+            applySwipePosition(0);
+        };
+
+        updateWidth();
+
+        const observer = new ResizeObserver(updateWidth);
+        observer.observe(pagerRef.current);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, []);
+
+    useEffect(() => {
+        activeIndexRef.current = activeIndex;
+        applySwipePosition(0, activeIndex);
+    }, [activeIndex]);
+
+    useEffect(() => {
+        if (!isSnapAnimating) {
+            if (snapTimeoutRef.current !== null) {
+                window.clearTimeout(snapTimeoutRef.current);
+                snapTimeoutRef.current = null;
+            }
+
+            return;
+        }
+
+        snapTimeoutRef.current = window.setTimeout(() => {
+            setIsSnapAnimating(false);
+            snapTimeoutRef.current = null;
+        }, 320);
+
+        return () => {
+            if (snapTimeoutRef.current !== null) {
+                window.clearTimeout(snapTimeoutRef.current);
+                snapTimeoutRef.current = null;
+            }
+        };
+    }, [isSnapAnimating]);
 
     return (
         <div className="min-h-screen">
@@ -363,30 +616,73 @@ export function DashboardPage() {
                     </div>
                 </aside>
 
-                <main className="min-w-0 flex-1 pb-24 lg:pb-0">{renderPage()}</main>
+                <main className="min-w-0 flex-1 pb-24 lg:pb-0">
+                    {isDesktop ? (
+                        renderPage(activeView)
+                    ) : (
+                        <div
+                            ref={pagerRef}
+                            className="overflow-hidden"
+                            style={{ touchAction: 'pan-y pinch-zoom' }}
+                            onTouchStart={handleTouchStart}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={handleTouchEnd}
+                            onTouchCancel={handleTouchEnd}
+                        >
+                            <div
+                                ref={trackRef}
+                                className={`grid auto-cols-[100%] grid-flow-col items-start ${
+                                    isDragging || !isSnapAnimating
+                                        ? ''
+                                        : 'transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]'
+                                }`}
+                            >
+                                {views.map((view) => (
+                                    <section
+                                        key={view.id}
+                                        className="min-w-0"
+                                        aria-hidden={view.id !== activeView}
+                                    >
+                                        {renderPage(view.id)}
+                                    </section>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </main>
             </div>
 
             <nav className="fixed inset-x-0 bottom-4 z-20 px-4 lg:hidden">
-                <div className="mx-auto flex max-w-2xl items-center justify-between rounded-[28px] border border-app-line bg-white/95 p-2 shadow-[0_20px_40px_-24px_rgba(15,23,42,0.35)] backdrop-blur">
-                    {views.map(({ id, label, Icon }) => (
-                        <button
-                            key={id}
-                            type="button"
-                            onClick={() => setActiveView(id)}
-                            aria-label={label}
-                            className={`flex min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-[20px] px-2 py-2 text-[10px] font-medium leading-tight transition sm:px-3 ${
-                                activeView === id
-                                    ? 'bg-brand-50 text-brand-600'
-                                    : 'text-slate-500'
+                <div className="mx-auto max-w-2xl rounded-[28px] border border-app-line bg-white/95 p-2 shadow-[0_20px_40px_-24px_rgba(15,23,42,0.35)] backdrop-blur">
+                    <div className="relative flex items-center">
+                        <span
+                            ref={indicatorRef}
+                            className={`pointer-events-none absolute inset-y-0 left-0 w-[calc(100%/6)] rounded-[20px] bg-brand-50 ${
+                                isDragging || !isSnapAnimating
+                                    ? ''
+                                    : 'transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]'
                             }`}
-                        >
-                            <Icon className="h-4 w-4" />
-                            <span className="sr-only">{label}</span>
-                            <span className="hidden w-full truncate text-center sm:block">
-                                {label}
-                            </span>
-                        </button>
-                    ))}
+                        />
+                        {views.map(({ id, label, Icon }) => (
+                            <button
+                                key={id}
+                                type="button"
+                                onClick={() => jumpToView(id)}
+                                aria-label={label}
+                                className={`relative z-10 flex min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-[20px] px-2 py-2 text-[10px] font-medium leading-tight transition-colors sm:px-3 ${
+                                    activeView === id
+                                        ? 'text-brand-600'
+                                        : 'text-slate-500'
+                                }`}
+                            >
+                                <Icon className="h-4 w-4" />
+                                <span className="sr-only">{label}</span>
+                                <span className="hidden w-full truncate text-center sm:block">
+                                    {label}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </nav>
         </div>
