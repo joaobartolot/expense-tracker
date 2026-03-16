@@ -3,7 +3,7 @@ import { todayISO } from '../utils/date';
 import type { FinanceState } from '../types/finance';
 
 export const initialFinanceState: FinanceState = {
-    settings: { defaultCurrency: 'USD' },
+    settings: { defaultCurrency: 'USD', budgetCycleStartDay: 1 },
     accounts: [
         { id: 'acc-checking', name: 'Checking', type: 'bank' },
         { id: 'acc-cash', name: 'Cash', type: 'cash' },

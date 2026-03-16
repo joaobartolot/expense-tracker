@@ -204,7 +204,7 @@ export function CategoriesPage({
             <section className="grid min-w-0 gap-6 xl:grid-cols-[0.95fr_1.05fr]">
                 <Card
                     title="Spending by Category"
-                    subtitle="Current-month expense split shown as a pie chart."
+                    subtitle="Current-cycle expense split shown as a pie chart."
                 >
                     <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
                         <div className="min-w-0 rounded-[24px] bg-slate-50 p-5">
@@ -285,7 +285,7 @@ export function CategoriesPage({
 
                 <Card
                     title="Categories"
-                    subtitle="Select a category to see its role, usage, and monthly impact."
+                    subtitle="Select a category to see its role, usage, and current-cycle impact."
                 >
                     <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
                         <div className="min-w-0 space-y-3">
@@ -374,7 +374,7 @@ export function CategoriesPage({
                                                 </p>
                                                 <p className="text-sm text-slate-500">
                                                     {activeCategory.type === 'expense'
-                                                        ? 'Tracked against this month’s spending'
+                                                        ? 'Tracked against this cycle’s spending'
                                                         : 'Used for incoming cash flow'}
                                                 </p>
                                             </div>
@@ -387,7 +387,7 @@ export function CategoriesPage({
                                     <div className="grid gap-3 sm:grid-cols-2">
                                         <div className="rounded-2xl bg-white px-4 py-3">
                                             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                                                Month spend
+                                                Cycle spend
                                             </p>
                                             <p className="mt-2 text-xl font-semibold text-slate-900">
                                                 {formatMoney(

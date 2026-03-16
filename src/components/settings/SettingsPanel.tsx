@@ -1,17 +1,21 @@
-import { BadgeDollarSign, Globe } from 'lucide-react';
+import { BadgeDollarSign, CalendarRange, Globe } from 'lucide-react';
 import { Card } from '../common/Card';
 import { CURRENCIES } from '../../data/constants';
 import type { Currency, ExchangeRateStatus } from '../../types/finance';
 
 interface SettingsPanelProps {
     defaultCurrency: Currency;
+    budgetCycleStartDay: number;
     onChangeDefaultCurrency: (currency: Currency) => void;
+    onChangeBudgetCycleStartDay: (day: number) => void;
     exchangeRateStatus: ExchangeRateStatus;
 }
 
 export function SettingsPanel({
     defaultCurrency,
+    budgetCycleStartDay,
     onChangeDefaultCurrency,
+    onChangeBudgetCycleStartDay,
     exchangeRateStatus,
 }: SettingsPanelProps) {
     const exchangeLabel =
@@ -24,7 +28,7 @@ export function SettingsPanel({
     return (
         <Card
             title="Settings"
-            subtitle="Choose how balances are normalized across the app."
+            subtitle="Choose how balances are normalized and how each budget cycle is grouped."
         >
             <label
                 htmlFor="default-currency"
@@ -51,6 +55,33 @@ export function SettingsPanel({
             <p className="mt-4 text-sm text-slate-500">
                 Transactions can be entered in any currency and are converted to
                 the default using current rates.
+            </p>
+
+            <label
+                htmlFor="budget-cycle-start-day"
+                className="mt-6 mb-2 flex items-center gap-2 text-sm font-medium text-slate-700"
+            >
+                <CalendarRange className="h-4 w-4 text-brand-500" />
+                Budget cycle start day
+            </label>
+            <select
+                id="budget-cycle-start-day"
+                className="app-select"
+                value={budgetCycleStartDay}
+                onChange={(event) =>
+                    onChangeBudgetCycleStartDay(Number(event.target.value))
+                }
+            >
+                {Array.from({ length: 31 }, (_, index) => index + 1).map((day) => (
+                    <option key={day} value={day}>
+                        Day {day}
+                    </option>
+                ))}
+            </select>
+
+            <p className="mt-4 text-sm text-slate-500">
+                Use the day your pay cycle starts. If a month is shorter than
+                that day, the cycle rolls over on the last day of that month.
             </p>
 
             <div className="mt-5 rounded-2xl bg-slate-50 px-4 py-3">

@@ -146,6 +146,18 @@ export function financeReducer(
                 },
             };
 
+        case financeActions.setBudgetCycleStartDay:
+            return {
+                ...state,
+                settings: {
+                    ...state.settings,
+                    budgetCycleStartDay: Math.min(
+                        31,
+                        Math.max(1, Math.trunc(action.payload) || 1),
+                    ),
+                },
+            };
+
         default:
             return state;
     }

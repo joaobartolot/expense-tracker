@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { convertAmount } from '../utils/currency';
+import { getBudgetCycleBounds } from '../utils/date';
 import type {
     ExchangeRates,
     FinanceState,
@@ -11,6 +12,7 @@ import type {
 
 export function useDashboardData(state: FinanceState, rates: ExchangeRates) {
     const defaultCurrency = state.settings.defaultCurrency;
+    const budgetCycleStartDay = state.settings.budgetCycleStartDay;
 
     const normalizedTransactions = useMemo<NormalizedTransaction[]>(
         () =>
@@ -26,29 +28,32 @@ export function useDashboardData(state: FinanceState, rates: ExchangeRates) {
         [state.transactions, defaultCurrency, rates],
     );
 
-    const currentMonthTransactions = useMemo(() => {
-        const month = new Date().getMonth();
-        const year = new Date().getFullYear();
+    const currentBudgetCycle = useMemo(
+        () => getBudgetCycleBounds(new Date(), budgetCycleStartDay),
+        [budgetCycleStartDay],
+    );
 
+    const currentCycleTransactions = useMemo(() => {
         return normalizedTransactions.filter((transaction) => {
-            const date = new Date(`${transaction.date}T00:00:00`);
-
-            return date.getMonth() === month && date.getFullYear() === year;
+            return (
+                transaction.date >= currentBudgetCycle.start &&
+                transaction.date < currentBudgetCycle.endExclusive
+            );
         });
-    }, [normalizedTransactions]);
+    }, [currentBudgetCycle.endExclusive, currentBudgetCycle.start, normalizedTransactions]);
 
-    const monthlySpent = currentMonthTransactions
+    const currentCycleSpent = currentCycleTransactions
         .filter((transaction) => transaction.type === 'expense')
         .reduce((sum, transaction) => sum + transaction.converted, 0);
 
-    const monthlyEarned = currentMonthTransactions
+    const currentCycleEarned = currentCycleTransactions
         .filter((transaction) => transaction.type === 'income')
         .reduce((sum, transaction) => sum + transaction.converted, 0);
 
     const spendingByCategory = useMemo<SpendingByCategoryEntry[]>(() => {
         const totals: Record<string, number> = {};
 
-        currentMonthTransactions
+        currentCycleTransactions
             .filter((transaction) => transaction.type === 'expense')
             .forEach((transaction) => {
                 const category = state.categories.find(
@@ -60,7 +65,7 @@ export function useDashboardData(state: FinanceState, rates: ExchangeRates) {
             });
 
         return Object.entries(totals).sort((a, b) => b[1] - a[1]);
-    }, [currentMonthTransactions, state.categories]);
+    }, [currentCycleTransactions, state.categories]);
 
     const recentTransactionGroups = useMemo<RecentTransactionGroups>(() => {
         const sorted = [...normalizedTransactions].sort((a, b) =>
@@ -76,30 +81,31 @@ export function useDashboardData(state: FinanceState, rates: ExchangeRates) {
     }, [normalizedTransactions]);
 
     const netWorthTrend = useMemo<NetWorthPoint[]>(() => {
-        const monthlyChanges = Array.from({ length: 6 }, (_, index) => {
-            const date = new Date();
+        const cycleChanges = Array.from({ length: 6 }, (_, index) => {
+            const cycleStart = getBudgetCycleBounds(
+                new Date(
+                    currentBudgetCycle.startDate.getFullYear(),
+                    currentBudgetCycle.startDate.getMonth() - (5 - index),
+                    currentBudgetCycle.startDate.getDate(),
+                ),
+                budgetCycleStartDay,
+            );
 
-            date.setMonth(date.getMonth() - (5 - index));
-
-            const month = date.getMonth();
-            const year = date.getFullYear();
-
-            const monthlyTransactions = normalizedTransactions.filter(
+            const cycleTransactions = normalizedTransactions.filter(
                 (transaction) => {
-                    const transactionDate = new Date(
-                        `${transaction.date}T00:00:00`,
-                    );
-
                     return (
-                        transactionDate.getMonth() === month &&
-                        transactionDate.getFullYear() === year
+                        transaction.date >= cycleStart.start &&
+                        transaction.date < cycleStart.endExclusive
                     );
                 },
             );
 
             return {
-                label: date.toLocaleDateString(undefined, { month: 'short' }),
-                change: monthlyTransactions.reduce(
+                label: cycleStart.startDate.toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                }),
+                change: cycleTransactions.reduce(
                     (sum, transaction) =>
                         sum +
                         (transaction.type === 'income'
@@ -110,19 +116,21 @@ export function useDashboardData(state: FinanceState, rates: ExchangeRates) {
             };
         });
 
-        return monthlyChanges.map((entry, index) => ({
+        return cycleChanges.map((entry, index) => ({
             label: entry.label,
-            value: monthlyChanges
+            value: cycleChanges
                 .slice(0, index + 1)
                 .reduce((sum, currentEntry) => sum + currentEntry.change, 0),
         }));
-    }, [normalizedTransactions]);
+    }, [budgetCycleStartDay, currentBudgetCycle.startDate, normalizedTransactions]);
 
     return {
         defaultCurrency,
+        budgetCycleStartDay,
         normalizedTransactions,
-        monthlySpent,
-        monthlyEarned,
+        currentBudgetCycleLabel: currentBudgetCycle.label,
+        currentCycleSpent,
+        currentCycleEarned,
         spendingByCategory,
         recentTransactionGroups,
         netWorthTrend,

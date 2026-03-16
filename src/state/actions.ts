@@ -22,6 +22,7 @@ export const financeActions = {
     deleteRecurringRule: 'DELETE_RECURRING_RULE',
     applyRecurringDue: 'APPLY_RECURRING_DUE',
     setDefaultCurrency: 'SET_DEFAULT_CURRENCY',
+    setBudgetCycleStartDay: 'SET_BUDGET_CYCLE_START_DAY',
 } as const;
 
 type FinanceActionMap = typeof financeActions;
@@ -47,4 +48,8 @@ export type FinanceAction =
     | { type: FinanceActionMap['updateRecurringRule']; payload: RecurringRule }
     | { type: FinanceActionMap['deleteRecurringRule']; payload: string }
     | { type: FinanceActionMap['applyRecurringDue'] }
-    | { type: FinanceActionMap['setDefaultCurrency']; payload: Currency };
+    | { type: FinanceActionMap['setDefaultCurrency']; payload: Currency }
+    | {
+          type: FinanceActionMap['setBudgetCycleStartDay'];
+          payload: number;
+      };

@@ -4,7 +4,7 @@ A scalable frontend architecture for a personal finance app focused on clarity a
 
 ## Features
 
-- Monthly overview (spent, earned, net)
+- Budget-cycle overview (spent, earned, net)
 - Transactions grouped by date (Today / Yesterday / historical)
 - Income and expense tracking
 - Multiple accounts (bank and cash)

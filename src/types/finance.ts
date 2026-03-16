@@ -51,6 +51,7 @@ export interface RecurringRule {
 
 export interface FinanceSettings {
     defaultCurrency: Currency;
+    budgetCycleStartDay: number;
 }
 
 export interface FinanceState {

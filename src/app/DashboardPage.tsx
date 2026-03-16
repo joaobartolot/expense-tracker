@@ -57,9 +57,11 @@ export function DashboardPage() {
 
     const {
         defaultCurrency,
+        budgetCycleStartDay,
         normalizedTransactions,
-        monthlySpent,
-        monthlyEarned,
+        currentBudgetCycleLabel,
+        currentCycleSpent,
+        currentCycleEarned,
         spendingByCategory,
         recentTransactionGroups,
         netWorthTrend,
@@ -188,6 +190,13 @@ export function DashboardPage() {
         });
     }
 
+    function setBudgetCycleStartDay(day: number) {
+        dispatch({
+            type: financeActions.setBudgetCycleStartDay,
+            payload: day,
+        });
+    }
+
     function renderPage() {
         if (activeView === 'home') {
             return (
@@ -196,8 +205,9 @@ export function DashboardPage() {
                     defaultCurrency={defaultCurrency}
                     accounts={state.accounts}
                     categories={state.categories}
-                    monthlySpent={monthlySpent}
-                    monthlyEarned={monthlyEarned}
+                    currentBudgetCycleLabel={currentBudgetCycleLabel}
+                    currentCycleSpent={currentCycleSpent}
+                    currentCycleEarned={currentCycleEarned}
                     recentTransactionGroups={recentTransactionGroups}
                     spendingByCategory={spendingByCategory}
                     netWorthTrend={netWorthTrend}
@@ -271,18 +281,20 @@ export function DashboardPage() {
         }
 
         return (
-            <SettingsPage
-                defaultCurrency={defaultCurrency}
-                exchangeRateStatus={exchangeRateStatus}
-                onChangeDefaultCurrency={(currency) =>
-                    dispatch({
-                        type: financeActions.setDefaultCurrency,
-                        payload: currency,
-                    })
-                }
-            />
-        );
-    }
+                <SettingsPage
+                    defaultCurrency={defaultCurrency}
+                    budgetCycleStartDay={budgetCycleStartDay}
+                    exchangeRateStatus={exchangeRateStatus}
+                    onChangeDefaultCurrency={(currency) =>
+                        dispatch({
+                            type: financeActions.setDefaultCurrency,
+                            payload: currency,
+                        })
+                    }
+                    onChangeBudgetCycleStartDay={setBudgetCycleStartDay}
+                />
+            );
+        }
 
     return (
         <div className="min-h-screen">

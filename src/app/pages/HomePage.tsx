@@ -25,8 +25,9 @@ interface HomePageProps {
     defaultCurrency: Currency;
     accounts: Account[];
     categories: Category[];
-    monthlySpent: number;
-    monthlyEarned: number;
+    currentBudgetCycleLabel: string;
+    currentCycleSpent: number;
+    currentCycleEarned: number;
     recentTransactionGroups: RecentTransactionGroups;
     spendingByCategory: SpendingByCategoryEntry[];
     netWorthTrend: NetWorthPoint[];
@@ -42,8 +43,9 @@ export function HomePage({
     defaultCurrency,
     accounts,
     categories,
-    monthlySpent,
-    monthlyEarned,
+    currentBudgetCycleLabel,
+    currentCycleSpent,
+    currentCycleEarned,
     recentTransactionGroups,
     spendingByCategory,
     netWorthTrend,
@@ -64,7 +66,7 @@ export function HomePage({
             <AppHeader
                 eyebrow="Home"
                 title="Your finance home"
-                description="The balance stays at the top, with your main monthly signals and latest activity underneath."
+                description={`The balance stays at the top, with your main budget-cycle signals for ${currentBudgetCycleLabel} and latest activity underneath.`}
                 meta={
                     <>
                         <div className="rounded-2xl bg-white/10 px-4 py-3">
@@ -88,9 +90,10 @@ export function HomePage({
             />
 
             <MonthlySummaryCards
-                spent={monthlySpent}
-                earned={monthlyEarned}
+                spent={currentCycleSpent}
+                earned={currentCycleEarned}
                 currency={defaultCurrency}
+                cycleLabel={currentBudgetCycleLabel}
             />
 
             <section className="grid gap-6 xl:grid-cols-[1.35fr_0.95fr]">
@@ -118,8 +121,9 @@ export function HomePage({
                 <div className="space-y-6">
                     <SpendingByCategoryChart
                         data={spendingByCategory}
-                        spent={monthlySpent}
+                        spent={currentCycleSpent}
                         defaultCurrency={defaultCurrency}
+                        cycleLabel={currentBudgetCycleLabel}
                     />
                     <NetWorthTrendChart points={netWorthTrend} />
                 </div>
