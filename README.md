@@ -1,4 +1,4 @@
-# Expense Tracker (React + Vite + Tailwind)
+# Expense Tracker (React + Vite + Tailwind + TypeScript)
 
 A scalable frontend architecture for a personal finance app focused on clarity and maintainability.
 
@@ -13,8 +13,8 @@ A scalable frontend architecture for a personal finance app focused on clarity a
 - Goals with progress and monthly savings guidance
 - Default currency settings + transaction-level currency conversion
 - Dashboard visualizations:
-  - Spending by category
-  - Net worth trend
+    - Spending by category
+    - Net worth trend
 
 ## Project Architecture
 
@@ -39,6 +39,21 @@ src/
 npm install
 npm run dev
 ```
+
+`npm run dev` starts Vite on the local network and prints a QR code in the terminal so you can open the app on your phone.
+
+## Tooling
+
+```bash
+npm run typecheck
+npm run lint
+npm run format
+```
+
+- TypeScript is used across the application source.
+- ESLint checks the TypeScript + React codebase.
+- Prettier formats the project with a `tabWidth` of `4`.
+- `prettier-plugin-tailwindcss` keeps Tailwind utility classes sorted automatically.
 
 ## Notes
 
