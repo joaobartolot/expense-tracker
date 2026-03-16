@@ -84,6 +84,41 @@ export function CategoriesPage({
         [normalizedTransactions, activeCategory],
     );
 
+    const categoryMetrics = useMemo(() => {
+        const spendingLookup = new Map(spendingByCategory);
+        const totalSpent = spendingByCategory.reduce(
+            (sum, [, value]) => sum + value,
+            0,
+        );
+
+        return categories.map((category) => {
+            const transactionCount = transactions.filter(
+                (item) => item.categoryId === category.id,
+            ).length;
+            const recurringCount = recurringRules.filter(
+                (item) => item.categoryId === category.id,
+            ).length;
+            const spent =
+                category.type === 'expense'
+                    ? spendingLookup.get(category.name) ?? 0
+                    : 0;
+            const share = totalSpent > 0 ? (spent / totalSpent) * 100 : 0;
+
+            return {
+                category,
+                transactionCount,
+                recurringCount,
+                spent,
+                share,
+                inUse: transactionCount > 0 || recurringCount > 0,
+            };
+        });
+    }, [categories, recurringRules, spendingByCategory, transactions]);
+
+    const activeCategoryMetrics =
+        categoryMetrics.find((entry) => entry.category.id === activeCategory?.id) ??
+        categoryMetrics[0];
+
     const pieSlices = useMemo(() => {
         const total = spendingByCategory.reduce((sum, [, value]) => sum + value, 0);
 
@@ -166,43 +201,75 @@ export function CategoriesPage({
                 </Card>
             </section>
 
-            <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+            <section className="grid min-w-0 gap-6 xl:grid-cols-[0.95fr_1.05fr]">
                 <Card
                     title="Spending by Category"
                     subtitle="Current-month expense split shown as a pie chart."
                 >
-                    <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-start">
-                        <svg viewBox="0 0 220 220" className="h-56 w-56">
-                            {pieSlices.length ? (
-                                pieSlices.map((slice) => (
-                                    <path
-                                        key={slice.label}
-                                        d={slice.path}
-                                        fill={slice.color}
-                                    />
-                                ))
-                            ) : (
-                                <circle cx="110" cy="110" r="90" fill="#e2e8f0" />
-                            )}
-                            <circle cx="110" cy="110" r="46" fill="white" />
-                        </svg>
+                    <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
+                        <div className="min-w-0 rounded-[24px] bg-slate-50 p-5">
+                            <div className="mx-auto w-full max-w-[240px]">
+                                <svg
+                                    viewBox="0 0 220 220"
+                                    className="h-auto w-full"
+                                    aria-label="Category spending pie chart"
+                                >
+                                    {pieSlices.length ? (
+                                        pieSlices.map((slice) => (
+                                            <path
+                                                key={slice.label}
+                                                d={slice.path}
+                                                fill={slice.color}
+                                            />
+                                        ))
+                                    ) : (
+                                        <circle cx="110" cy="110" r="90" fill="#e2e8f0" />
+                                    )}
+                                    <circle cx="110" cy="110" r="46" fill="white" />
+                                    <text
+                                        x="110"
+                                        y="104"
+                                        textAnchor="middle"
+                                        className="fill-slate-400 text-[10px] uppercase tracking-[0.28em]"
+                                    >
+                                        Total
+                                    </text>
+                                    <text
+                                        x="110"
+                                        y="124"
+                                        textAnchor="middle"
+                                        className="fill-slate-900 text-sm font-semibold"
+                                    >
+                                        {formatMoney(
+                                            pieSlices.reduce(
+                                                (sum, slice) => sum + slice.value,
+                                                0,
+                                            ),
+                                            defaultCurrency,
+                                        )}
+                                    </text>
+                                </svg>
+                            </div>
+                        </div>
 
-                        <div className="w-full space-y-3">
+                        <div className="min-w-0 space-y-3">
                             {pieSlices.map((slice) => (
                                 <div
                                     key={slice.label}
-                                    className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3"
+                                    className="grid min-w-0 gap-3 rounded-2xl bg-slate-50 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto]"
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <span
-                                            className="h-3 w-3 rounded-full"
-                                            style={{ backgroundColor: slice.color }}
-                                        />
-                                        <span className="text-sm font-medium text-slate-700">
-                                            {slice.label}
-                                        </span>
+                                    <div className="min-w-0">
+                                        <div className="flex min-w-0 items-center gap-3">
+                                            <span
+                                                className="h-3 w-3 shrink-0 rounded-full"
+                                                style={{ backgroundColor: slice.color }}
+                                            />
+                                            <span className="truncate text-sm font-medium text-slate-700">
+                                                {slice.label}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <span className="text-sm text-slate-500">
+                                    <span className="text-sm text-slate-500 sm:text-right">
                                         {formatMoney(slice.value, defaultCurrency)}
                                     </span>
                                 </div>
@@ -218,95 +285,194 @@ export function CategoriesPage({
 
                 <Card
                     title="Categories"
-                    subtitle="Pick a category to inspect its related transactions."
+                    subtitle="Select a category to see its role, usage, and monthly impact."
                 >
-                    <div className="space-y-3">
-                        {categories.map((category) => {
-                            const transactionCount = transactions.filter(
-                                (item) => item.categoryId === category.id,
-                            ).length;
-                            const recurringCount = recurringRules.filter(
-                                (item) => item.categoryId === category.id,
-                            ).length;
-                            const inUse = transactionCount > 0 || recurringCount > 0;
-
-                            return (
-                                <div
-                                    key={category.id}
-                                    role="button"
-                                    tabIndex={0}
-                                    onClick={() => setActiveCategoryId(category.id)}
-                                    onKeyDown={(event) => {
-                                        if (
-                                            event.key === 'Enter' ||
-                                            event.key === ' '
-                                        ) {
-                                            event.preventDefault();
-                                            setActiveCategoryId(category.id);
-                                        }
-                                    }}
-                                    className={`flex w-full items-center justify-between gap-4 rounded-[24px] border p-4 text-left transition ${
-                                        activeCategory?.id === category.id
-                                            ? 'border-brand-500 bg-brand-50/70'
-                                            : 'border-app-line bg-slate-50/90 hover:border-brand-100'
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="rounded-2xl bg-white p-3 text-brand-500 shadow-sm">
-                                            <CategoryIcon
-                                                iconKey={category.icon}
-                                                className="h-5 w-5"
-                                            />
+                    <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
+                        <div className="min-w-0 space-y-3">
+                            {categoryMetrics.map(
+                                ({
+                                    category,
+                                    transactionCount,
+                                    recurringCount,
+                                    spent,
+                                    share,
+                                }) => (
+                                    <button
+                                        key={category.id}
+                                        type="button"
+                                        onClick={() => setActiveCategoryId(category.id)}
+                                        className={`grid w-full min-w-0 gap-4 rounded-[24px] border p-4 text-left transition sm:grid-cols-[minmax(0,1fr)_auto] ${
+                                            activeCategory?.id === category.id
+                                                ? 'border-brand-500 bg-brand-50/70 shadow-[0_16px_36px_-28px_rgba(79,70,229,0.65)]'
+                                                : 'border-app-line bg-slate-50/90 hover:border-brand-100 hover:bg-white'
+                                        }`}
+                                    >
+                                        <div className="flex min-w-0 items-start gap-3">
+                                            <div className="rounded-2xl bg-white p-3 text-brand-500 shadow-sm">
+                                                <CategoryIcon
+                                                    iconKey={category.icon}
+                                                    className="h-5 w-5"
+                                                />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <p className="truncate font-semibold text-slate-900">
+                                                        {category.name}
+                                                    </p>
+                                                    <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                                                        {category.type}
+                                                    </span>
+                                                </div>
+                                                <p className="mt-1 text-sm text-slate-500">
+                                                    {transactionCount} transactions • {recurringCount} recurring rules
+                                                </p>
+                                                {category.type === 'expense' ? (
+                                                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+                                                        <div
+                                                            className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-700"
+                                                            style={{
+                                                                width: `${Math.min(
+                                                                    Math.max(share, share > 0 ? 8 : 0),
+                                                                    100,
+                                                                )}%`,
+                                                            }}
+                                                        />
+                                                    </div>
+                                                ) : null}
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-semibold text-slate-900">
-                                                {category.name}
-                                            </p>
+
+                                        <div className="flex shrink-0 flex-col items-start justify-between gap-2 sm:items-end">
                                             <p className="text-sm text-slate-500">
-                                                {transactionCount} transactions • {recurringCount} recurring rules
+                                                {category.type === 'expense'
+                                                    ? `${share.toFixed(0)}% of spend`
+                                                    : 'Income category'}
+                                            </p>
+                                            <p className="text-base font-semibold text-slate-900">
+                                                {formatMoney(spent, defaultCurrency)}
+                                            </p>
+                                        </div>
+                                    </button>
+                                ),
+                            )}
+                        </div>
+
+                        <div className="rounded-[28px] border border-app-line bg-slate-50/90 p-5">
+                            {activeCategory && activeCategoryMetrics ? (
+                                <div className="space-y-5">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="rounded-[22px] bg-white p-3 text-brand-500 shadow-sm">
+                                                <CategoryIcon
+                                                    iconKey={activeCategory.icon}
+                                                    className="h-6 w-6"
+                                                />
+                                            </div>
+                                            <div>
+                                                <p className="text-lg font-semibold text-slate-900">
+                                                    {activeCategory.name}
+                                                </p>
+                                                <p className="text-sm text-slate-500">
+                                                    {activeCategory.type === 'expense'
+                                                        ? 'Tracked against this month’s spending'
+                                                        : 'Used for incoming cash flow'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+                                            {activeCategory.type}
+                                        </span>
+                                    </div>
+
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <div className="rounded-2xl bg-white px-4 py-3">
+                                            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                                                Month spend
+                                            </p>
+                                            <p className="mt-2 text-xl font-semibold text-slate-900">
+                                                {formatMoney(
+                                                    activeCategoryMetrics.spent,
+                                                    defaultCurrency,
+                                                )}
+                                            </p>
+                                        </div>
+                                        <div className="rounded-2xl bg-white px-4 py-3">
+                                            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                                                Share
+                                            </p>
+                                            <p className="mt-2 text-xl font-semibold text-slate-900">
+                                                {activeCategory.type === 'expense'
+                                                    ? `${activeCategoryMetrics.share.toFixed(1)}%`
+                                                    : 'N/A'}
+                                            </p>
+                                        </div>
+                                        <div className="rounded-2xl bg-white px-4 py-3">
+                                            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                                                Transactions
+                                            </p>
+                                            <p className="mt-2 text-xl font-semibold text-slate-900">
+                                                {activeCategoryMetrics.transactionCount}
+                                            </p>
+                                        </div>
+                                        <div className="rounded-2xl bg-white px-4 py-3">
+                                            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                                                Recurring rules
+                                            </p>
+                                            <p className="mt-2 text-xl font-semibold text-slate-900">
+                                                {activeCategoryMetrics.recurringCount}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <span className="rounded-full bg-white px-2 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-                                            {category.type}
-                                        </span>
+
+                                    <div className="flex flex-wrap gap-3">
                                         <button
                                             type="button"
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                setEditingCategory(category);
-                                            }}
-                                            className="rounded-2xl border border-app-line bg-white p-2 text-slate-500"
+                                            onClick={() => setEditingCategory(activeCategory)}
+                                            className="app-button-secondary"
                                         >
-                                            <Pencil className="h-4 w-4" />
+                                            <Pencil className="mr-2 h-4 w-4" />
+                                            Edit category
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                if (!inUse) {
-                                                    onDeleteCategory(category.id);
+                                            onClick={() => {
+                                                if (!activeCategoryMetrics.inUse) {
+                                                    onDeleteCategory(activeCategory.id);
                                                 }
                                             }}
-                                            className={`rounded-2xl border bg-white p-2 ${
-                                                inUse
-                                                    ? 'cursor-not-allowed border-slate-200 text-slate-300'
-                                                    : 'border-rose-100 text-rose-500'
+                                            className={`inline-flex items-center justify-center rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+                                                activeCategoryMetrics.inUse
+                                                    ? 'cursor-not-allowed border-slate-200 bg-white text-slate-300'
+                                                    : 'border-rose-100 bg-white text-rose-500 hover:bg-rose-50'
                                             }`}
-                                            disabled={inUse}
+                                            disabled={activeCategoryMetrics.inUse}
                                         >
-                                            <Trash2 className="h-4 w-4" />
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Delete category
                                         </button>
                                     </div>
+
+                                    {activeCategoryMetrics.inUse ? (
+                                        <p className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-500">
+                                            This category can’t be deleted while it still has transactions or recurring rules attached.
+                                        </p>
+                                    ) : (
+                                        <p className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-500">
+                                            This category is unused right now, so it can be safely removed.
+                                        </p>
+                                    )}
                                 </div>
-                            );
-                        })}
+                            ) : (
+                                <p className="rounded-2xl bg-white px-4 py-8 text-sm text-slate-500">
+                                    Create a category to start organizing your transactions.
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </Card>
             </section>
 
-            <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+            <section className="grid min-w-0 gap-6 xl:grid-cols-[1.05fr_0.95fr]">
                 <Card
                     title={
                         activeCategory
