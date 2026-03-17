@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
     ArrowUpDown,
@@ -41,8 +41,6 @@ interface ViewDefinition {
     Icon: LucideIcon;
 }
 
-type SwipeIntent = 'undecided' | 'horizontal' | 'vertical';
-
 const views: ViewDefinition[] = [
     { id: 'home', label: 'Home', Icon: LayoutDashboard },
     { id: 'transactions', label: 'Transactions', Icon: ArrowUpDown },
@@ -56,31 +54,6 @@ export function DashboardPage() {
     const { rates, status: exchangeRateStatus } = useExchangeRates();
     const { state, dispatch } = useFinanceState();
     const [activeView, setActiveView] = useState<ViewId>('home');
-    const [isDesktop, setIsDesktop] = useState(() =>
-        typeof window !== 'undefined'
-            ? window.matchMedia('(min-width: 1024px)').matches
-            : false,
-    );
-    const [isDragging, setIsDragging] = useState(false);
-    const [isSnapAnimating, setIsSnapAnimating] = useState(false);
-    const pagerRef = useRef<HTMLDivElement | null>(null);
-    const trackRef = useRef<HTMLDivElement | null>(null);
-    const indicatorRef = useRef<HTMLSpanElement | null>(null);
-    const containerWidthRef = useRef(0);
-    const activeIndexRef = useRef(0);
-    const snapTimeoutRef = useRef<number | null>(null);
-    const gestureRef = useRef({
-        pointerId: null as number | null,
-        startX: 0,
-        startY: 0,
-        lastX: 0,
-        previousX: 0,
-        lastMoveAt: 0,
-        previousMoveAt: 0,
-        offset: 0,
-        intent: 'undecided' as SwipeIntent,
-        isTracking: false,
-    });
 
     const {
         defaultCurrency,
@@ -324,230 +297,9 @@ export function DashboardPage() {
         );
     }
 
-    function applySwipePosition(offset: number, index = activeIndexRef.current) {
-        const width =
-            containerWidthRef.current || pagerRef.current?.offsetWidth || 1;
-        const progress = Math.min(
-            views.length - 1,
-            Math.max(0, index - offset / width),
-        );
-
-        if (trackRef.current) {
-            trackRef.current.style.transform = `translate3d(${Math.round(
-                -index * width + offset,
-            )}px, 0, 0)`;
-        }
-
-        if (indicatorRef.current) {
-            indicatorRef.current.style.transform = `translate3d(${progress * 100}%, 0, 0)`;
-        }
-    }
-
-    function finishSwipe(nextIndex: number) {
-        gestureRef.current.offset = 0;
-        setIsDragging(false);
-        setIsSnapAnimating(true);
-        setActiveView(views[nextIndex].id);
-    }
-
     function jumpToView(viewId: ViewId) {
-        gestureRef.current.offset = 0;
-        setIsDragging(false);
-        setIsSnapAnimating(false);
         setActiveView(viewId);
     }
-
-    function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
-        if (isDesktop || event.touches.length !== 1) {
-            return;
-        }
-
-        const target = event.target as HTMLElement | null;
-
-        if (
-            target?.closest(
-                'button, input, select, textarea, a, [role="button"], [role="dialog"]',
-            )
-        ) {
-            return;
-        }
-
-        const touch = event.touches[0];
-        gestureRef.current = {
-            pointerId: touch.identifier,
-            startX: touch.clientX,
-            startY: touch.clientY,
-            lastX: touch.clientX,
-            previousX: touch.clientX,
-            lastMoveAt: performance.now(),
-            previousMoveAt: performance.now(),
-            offset: 0,
-            intent: 'undecided',
-            isTracking: true,
-        };
-    }
-
-    function handleTouchMove(event: React.TouchEvent<HTMLDivElement>) {
-        const gesture = gestureRef.current;
-
-        if (
-            isDesktop ||
-            !gesture.isTracking ||
-            event.touches.length !== 1 ||
-            event.touches[0].identifier !== gesture.pointerId
-        ) {
-            return;
-        }
-
-        const touch = event.touches[0];
-        const deltaX = touch.clientX - gesture.startX;
-        const deltaY = touch.clientY - gesture.startY;
-
-        if (gesture.intent === 'undecided') {
-            if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10) {
-                return;
-            }
-
-            gesture.intent =
-                Math.abs(deltaX) > Math.abs(deltaY) ? 'horizontal' : 'vertical';
-
-            if (gesture.intent === 'vertical') {
-                gesture.isTracking = false;
-                return;
-            }
-
-            setIsDragging(true);
-        }
-
-        if (gesture.intent !== 'horizontal') {
-            return;
-        }
-
-        event.preventDefault();
-
-        const atFirstView = activeIndexRef.current === 0;
-        const atLastView = activeIndexRef.current === views.length - 1;
-        const resistedOffset =
-            (atFirstView && deltaX > 0) || (atLastView && deltaX < 0)
-                ? deltaX * 0.35
-                : deltaX;
-
-        gesture.offset = resistedOffset;
-        gesture.previousX = gesture.lastX;
-        gesture.previousMoveAt = gesture.lastMoveAt;
-        gesture.lastX = touch.clientX;
-        gesture.lastMoveAt = performance.now();
-        applySwipePosition(resistedOffset);
-    }
-
-    function handleTouchEnd() {
-        const gesture = gestureRef.current;
-
-        if (!gesture.isTracking && gesture.intent !== 'horizontal') {
-            return;
-        }
-
-        const width = containerWidthRef.current || pagerRef.current?.offsetWidth || 1;
-        const elapsed = Math.max(1, gesture.lastMoveAt - gesture.previousMoveAt);
-        const velocity = (gesture.lastX - gesture.previousX) / elapsed;
-        const travelledRatio = Math.abs(gesture.offset) / width;
-        let nextIndex = activeIndexRef.current;
-
-        if (
-            travelledRatio > 0.18 ||
-            (Math.abs(gesture.offset) > 24 && Math.abs(velocity) > 0.45)
-        ) {
-            if (gesture.offset < 0) {
-                nextIndex = Math.min(views.length - 1, activeIndexRef.current + 1);
-            } else if (gesture.offset > 0) {
-                nextIndex = Math.max(0, activeIndexRef.current - 1);
-            }
-        }
-
-        gestureRef.current = {
-            pointerId: null,
-            startX: 0,
-            startY: 0,
-            lastX: 0,
-            previousX: 0,
-            lastMoveAt: 0,
-            previousMoveAt: 0,
-            offset: 0,
-            intent: 'undecided',
-            isTracking: false,
-        };
-
-        finishSwipe(nextIndex);
-    }
-
-    useEffect(() => {
-        const mediaQuery = window.matchMedia('(min-width: 1024px)');
-        const syncDesktop = (matches: boolean) => {
-            setIsDesktop(matches);
-            setIsDragging(false);
-            setIsSnapAnimating(false);
-        };
-
-        syncDesktop(mediaQuery.matches);
-
-        const handleChange = (event: MediaQueryListEvent) => {
-            syncDesktop(event.matches);
-        };
-
-        mediaQuery.addEventListener('change', handleChange);
-
-        return () => {
-            mediaQuery.removeEventListener('change', handleChange);
-        };
-    }, []);
-
-    useEffect(() => {
-        if (!pagerRef.current) {
-            return;
-        }
-
-        const updateWidth = () => {
-            containerWidthRef.current = pagerRef.current?.offsetWidth ?? 0;
-            applySwipePosition(0);
-        };
-
-        updateWidth();
-
-        const observer = new ResizeObserver(updateWidth);
-        observer.observe(pagerRef.current);
-
-        return () => {
-            observer.disconnect();
-        };
-    }, []);
-
-    useEffect(() => {
-        activeIndexRef.current = activeIndex;
-        applySwipePosition(0, activeIndex);
-    }, [activeIndex]);
-
-    useEffect(() => {
-        if (!isSnapAnimating) {
-            if (snapTimeoutRef.current !== null) {
-                window.clearTimeout(snapTimeoutRef.current);
-                snapTimeoutRef.current = null;
-            }
-
-            return;
-        }
-
-        snapTimeoutRef.current = window.setTimeout(() => {
-            setIsSnapAnimating(false);
-            snapTimeoutRef.current = null;
-        }, 320);
-
-        return () => {
-            if (snapTimeoutRef.current !== null) {
-                window.clearTimeout(snapTimeoutRef.current);
-                snapTimeoutRef.current = null;
-            }
-        };
-    }, [isSnapAnimating]);
 
     return (
         <div className="min-h-screen">
@@ -617,38 +369,7 @@ export function DashboardPage() {
                 </aside>
 
                 <main className="min-w-0 flex-1 pb-24 lg:pb-0">
-                    {isDesktop ? (
-                        renderPage(activeView)
-                    ) : (
-                        <div
-                            ref={pagerRef}
-                            className="overflow-hidden"
-                            style={{ touchAction: 'pan-y pinch-zoom' }}
-                            onTouchStart={handleTouchStart}
-                            onTouchMove={handleTouchMove}
-                            onTouchEnd={handleTouchEnd}
-                            onTouchCancel={handleTouchEnd}
-                        >
-                            <div
-                                ref={trackRef}
-                                className={`grid auto-cols-[100%] grid-flow-col items-start ${
-                                    isDragging || !isSnapAnimating
-                                        ? ''
-                                        : 'transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]'
-                                }`}
-                            >
-                                {views.map((view) => (
-                                    <section
-                                        key={view.id}
-                                        className="min-w-0"
-                                        aria-hidden={view.id !== activeView}
-                                    >
-                                        {renderPage(view.id)}
-                                    </section>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                    {renderPage(activeView)}
                 </main>
             </div>
 
@@ -656,12 +377,10 @@ export function DashboardPage() {
                 <div className="mx-auto max-w-2xl rounded-[28px] border border-app-line bg-white/95 p-2 shadow-[0_20px_40px_-24px_rgba(15,23,42,0.35)] backdrop-blur">
                     <div className="relative flex items-center">
                         <span
-                            ref={indicatorRef}
-                            className={`pointer-events-none absolute inset-y-0 left-0 w-[calc(100%/6)] rounded-[20px] bg-brand-50 ${
-                                isDragging || !isSnapAnimating
-                                    ? ''
-                                    : 'transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]'
-                            }`}
+                            className="pointer-events-none absolute inset-y-0 left-0 w-[calc(100%/6)] rounded-[20px] bg-brand-50 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                            style={{
+                                transform: `translate3d(${activeIndex * 100}%, 0, 0)`,
+                            }}
                         />
                         {views.map(({ id, label, Icon }) => (
                             <button
