@@ -57,7 +57,7 @@ export function Modal({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="rounded-2xl border border-app-line p-2 text-slate-500 transition hover:text-slate-900"
+                            className="app-icon-button text-slate-500 hover:text-slate-900"
                             aria-label="Close modal"
                         >
                             <X className="h-4 w-4" />

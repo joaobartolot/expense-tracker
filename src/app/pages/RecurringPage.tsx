@@ -145,7 +145,7 @@ export function RecurringPage({
                                         <button
                                             type="button"
                                             onClick={() => setEditingRule(rule)}
-                                            className="app-button-secondary px-3 py-2"
+                                            className="app-icon-button"
                                         >
                                             <Pencil className="h-4 w-4" />
                                         </button>
@@ -154,7 +154,7 @@ export function RecurringPage({
                                             onClick={() =>
                                                 onDeleteRecurringRule(rule.id)
                                             }
-                                            className="rounded-2xl border border-rose-100 bg-white px-3 py-2 text-rose-500 transition hover:bg-rose-50"
+                                            className="app-icon-button text-rose-500 hover:bg-rose-50"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </button>

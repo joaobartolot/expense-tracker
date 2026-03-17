@@ -1,31 +1,33 @@
-import { useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
-    ArrowUpDown,
-    Flag,
-    LayoutDashboard,
-    Repeat,
-    Settings,
-    Tags,
+	ArrowUpDown,
+	Flag,
+	LayoutDashboard,
+	Repeat,
+	Settings,
+	Tags,
 } from 'lucide-react';
-import { financeActions } from '../state/actions';
-import { todayISO } from '../utils/date';
+import { useMemo, useState } from 'react';
+import { ThemeToggle } from '../components/common/ThemeToggle';
+import { useDashboardData } from '../hooks/useDashboardData';
 import { useExchangeRates } from '../hooks/useExchangeRates';
 import { useFinanceState } from '../hooks/useFinanceState';
-import { useDashboardData } from '../hooks/useDashboardData';
-import { formatMoney } from '../utils/currency';
+import { useTheme } from '../hooks/useTheme';
+import { financeActions } from '../state/actions';
 import type {
-    Category,
-    Goal,
-    RecurringRule,
-    Transaction,
+	Category,
+	Goal,
+	RecurringRule,
+	Transaction,
 } from '../types/finance';
-import { HomePage } from './pages/HomePage';
-import { TransactionsPage } from './pages/TransactionsPage';
+import { formatMoney } from '../utils/currency';
+import { todayISO } from '../utils/date';
 import { CategoriesPage } from './pages/CategoriesPage';
-import { RecurringPage } from './pages/RecurringPage';
 import { GoalsPage } from './pages/GoalsPage';
+import { HomePage } from './pages/HomePage';
+import { RecurringPage } from './pages/RecurringPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { TransactionsPage } from './pages/TransactionsPage';
 
 type ViewId =
     | 'home'
@@ -53,6 +55,7 @@ const views: ViewDefinition[] = [
 export function DashboardPage() {
     const { rates, status: exchangeRateStatus } = useExchangeRates();
     const { state, dispatch } = useFinanceState();
+    const { theme, toggleTheme } = useTheme();
     const [activeView, setActiveView] = useState<ViewId>('home');
 
     const {
@@ -212,8 +215,6 @@ export function DashboardPage() {
                     recentTransactionGroups={recentTransactionGroups}
                     spendingByCategory={spendingByCategory}
                     netWorthTrend={netWorthTrend}
-                    transactionCount={state.transactions.length}
-                    recurringCount={state.recurringRules.length}
                     onCreateTransaction={addTransaction}
                     onUpdateTransaction={updateTransaction}
                     onDeleteTransaction={deleteTransaction}
@@ -311,12 +312,11 @@ export function DashboardPage() {
                                 Expense Tracker
                             </p>
                             <h1 className="mt-3 text-2xl font-semibold tracking-tight">
-                                Finance, split into clear pages.
+                                Money, organized into clear pages.
                             </h1>
                             <p className="mt-3 text-sm leading-6 text-slate-300">
-                                Each area now has its own page component, with the
-                                main balance surfaced near the top instead of at
-                                the bottom.
+                                Jump between home, transactions, categories,
+                                goals, and settings without losing your place.
                             </p>
                         </div>
 
@@ -335,10 +335,10 @@ export function DashboardPage() {
                                     key={id}
                                     type="button"
                                     onClick={() => setActiveView(id)}
-                                    className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${
+                                    className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium transition-all duration-300 ${
                                         activeView === id
-                                            ? 'bg-white text-slate-950'
-                                            : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                                            ? 'bg-brand-500 text-white shadow-[0_16px_30px_-20px_rgba(108,62,244,0.9)]'
+                                            : 'text-slate-300 hover:bg-white/12 hover:text-white'
                                     }`}
                                 >
                                     <Icon className="h-4 w-4" />
@@ -347,28 +347,49 @@ export function DashboardPage() {
                             ))}
                         </nav>
 
-                        <div className="mt-auto grid grid-cols-2 gap-3">
-                            <div className="rounded-2xl bg-white/10 p-4">
-                                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
-                                    Accounts
-                                </p>
-                                <p className="mt-2 text-lg font-semibold text-white">
-                                    {state.accounts.length}
-                                </p>
-                            </div>
-                            <div className="rounded-2xl bg-white/10 p-4">
-                                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
-                                    Categories
-                                </p>
-                                <p className="mt-2 text-lg font-semibold text-white">
-                                    {state.categories.length}
-                                </p>
-                            </div>
+                        <div className="mt-auto flex items-end justify-end border-t border-white/10 pt-5">
+                            <ThemeToggle
+                                theme={theme}
+                                onToggle={toggleTheme}
+                                title="Toggle color mode"
+                            />
                         </div>
                     </div>
                 </aside>
 
                 <main className="min-w-0 flex-1 pb-24 lg:pb-0">
+                    <section className="mb-4 lg:hidden">
+                        <div className="app-card overflow-hidden bg-slate-950 p-5 text-white">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="max-w-[15rem]">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-100">
+                                        Expense Tracker
+                                    </p>
+                                    <h1 className="mt-3 text-xl font-semibold tracking-tight">
+                                        Your money hub
+                                    </h1>
+                                    <p className="mt-2 text-sm leading-6 text-slate-300">
+                                        Pick a section below and keep your main
+                                        numbers close by.
+                                    </p>
+                                </div>
+                                <ThemeToggle
+                                    theme={theme}
+                                    onToggle={toggleTheme}
+                                    title="Toggle color mode"
+                                />
+                            </div>
+
+                            <div className="mt-5 rounded-[22px] bg-white/10 px-4 py-3">
+                                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
+                                    Total balance
+                                </p>
+                                <p className="mt-2 text-xl font-semibold">
+                                    {formatMoney(totalBalance, defaultCurrency)}
+                                </p>
+                            </div>
+                        </div>
+                    </section>
                     {renderPage(activeView)}
                 </main>
             </div>
@@ -390,7 +411,7 @@ export function DashboardPage() {
                                 aria-label={label}
                                 className={`relative z-10 flex min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-[20px] px-2 py-2 text-[10px] font-medium leading-tight transition-colors sm:px-3 ${
                                     activeView === id
-                                        ? 'text-brand-600'
+                                        ? 'text-brand-700'
                                         : 'text-slate-500'
                                 }`}
                             >

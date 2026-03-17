@@ -64,9 +64,9 @@ export function RecentTransactions({
                                         key={transaction.id}
                                         type="button"
                                         onClick={() => onTransactionClick?.(transaction)}
-                                        className="flex w-full items-center justify-between gap-4 rounded-3xl border border-slate-100 bg-slate-50/80 p-4 text-left transition hover:border-brand-100 hover:bg-white"
+                                        className="flex w-full flex-col gap-4 rounded-[24px] border border-app-line bg-slate-50/90 p-4 text-left transition-all duration-300 hover:border-brand-100 hover:bg-white lg:flex-row lg:items-center lg:justify-between"
                                     >
-                                        <div className="flex min-w-0 items-center gap-3">
+                                        <div className="flex items-start gap-3">
                                             <div className="rounded-2xl bg-white p-3 text-brand-500 shadow-sm">
                                                 <CategoryIcon
                                                     iconKey={category?.icon}
@@ -74,11 +74,12 @@ export function RecentTransactions({
                                                 />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="truncate font-semibold text-slate-900">
+                                                <p className="font-semibold text-slate-900">
                                                     {transaction.description}
                                                 </p>
-                                                <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                                                <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500">
                                                     <span>{category?.name ?? 'Uncategorized'}</span>
+                                                    <span>•</span>
                                                     <span className="inline-flex items-center gap-1">
                                                         {account?.type === 'bank' ? (
                                                             <Landmark className="h-3.5 w-3.5" />
@@ -87,26 +88,29 @@ export function RecentTransactions({
                                                         )}
                                                         {account?.name ?? 'Unknown account'}
                                                     </span>
-                                                    <span>
-                                                        {transaction.currency}{' '}
-                                                        {transaction.amount.toFixed(2)}
-                                                    </span>
+                                                    <span>•</span>
+                                                    <span>{transaction.date}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <p
-                                            className={`whitespace-nowrap text-base font-semibold ${
-                                                transaction.type === 'income'
-                                                    ? 'text-emerald-600'
-                                                    : 'text-rose-600'
-                                            }`}
-                                        >
-                                            {sign}
-                                            {formatMoney(
-                                                transaction.converted,
-                                                defaultCurrency,
-                                            )}
-                                        </p>
+                                        <div className="flex flex-col gap-1 lg:items-end">
+                                            <p
+                                                className={`text-lg font-semibold ${
+                                                    transaction.type === 'income'
+                                                        ? 'text-emerald-600'
+                                                        : 'text-rose-500'
+                                                }`}
+                                            >
+                                                {sign}
+                                                {formatMoney(
+                                                    transaction.converted,
+                                                    defaultCurrency,
+                                                )}
+                                            </p>
+                                            <p className="text-xs text-slate-500">
+                                                {transaction.currency} {transaction.amount.toFixed(2)}
+                                            </p>
+                                        </div>
                                     </button>
                                 );
                             })}

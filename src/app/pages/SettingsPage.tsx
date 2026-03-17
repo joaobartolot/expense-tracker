@@ -22,7 +22,7 @@ export function SettingsPage({
             <AppHeader
                 eyebrow="Settings"
                 title="App settings"
-                description="Keep currency behavior, budget-cycle boundaries, and exchange-rate context in one quieter place."
+                description="Keep currency behavior, budget period boundaries, and exchange-rate context in one quieter place."
             />
             <SettingsPanel
                 defaultCurrency={defaultCurrency}

@@ -204,7 +204,7 @@ export function CategoriesPage({
             <section className="grid min-w-0 gap-6 xl:grid-cols-[0.95fr_1.05fr]">
                 <Card
                     title="Spending by Category"
-                    subtitle="Current-cycle expense split shown as a pie chart."
+                    subtitle="Current spending split shown as a pie chart."
                 >
                     <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
                         <div className="min-w-0 rounded-[24px] bg-slate-50 p-5">
@@ -225,7 +225,12 @@ export function CategoriesPage({
                                     ) : (
                                         <circle cx="110" cy="110" r="90" fill="#e2e8f0" />
                                     )}
-                                    <circle cx="110" cy="110" r="46" fill="white" />
+                                    <circle
+                                        cx="110"
+                                        cy="110"
+                                        r="46"
+                                        fill="var(--app-panel)"
+                                    />
                                     <text
                                         x="110"
                                         y="104"
@@ -285,7 +290,7 @@ export function CategoriesPage({
 
                 <Card
                     title="Categories"
-                    subtitle="Select a category to see its role, usage, and current-cycle impact."
+                    subtitle="Select a category to see its role, usage, and current impact."
                 >
                     <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
                         <div className="min-w-0 space-y-3">
@@ -374,7 +379,7 @@ export function CategoriesPage({
                                                 </p>
                                                 <p className="text-sm text-slate-500">
                                                     {activeCategory.type === 'expense'
-                                                        ? 'Tracked against this cycle’s spending'
+                                                        ? 'Tracked against this period’s spending'
                                                         : 'Used for incoming cash flow'}
                                                 </p>
                                             </div>
@@ -387,7 +392,7 @@ export function CategoriesPage({
                                     <div className="grid gap-3 sm:grid-cols-2">
                                         <div className="rounded-2xl bg-white px-4 py-3">
                                             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                                                Cycle spend
+                                                Period spend
                                             </p>
                                             <p className="mt-2 text-xl font-semibold text-slate-900">
                                                 {formatMoney(
@@ -442,8 +447,8 @@ export function CategoriesPage({
                                             }}
                                             className={`inline-flex items-center justify-center rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
                                                 activeCategoryMetrics.inUse
-                                                    ? 'cursor-not-allowed border-slate-200 bg-white text-slate-300'
-                                                    : 'border-rose-100 bg-white text-rose-500 hover:bg-rose-50'
+                                                    ? 'cursor-not-allowed border-[#e5e7eb] bg-white text-slate-300'
+                                                    : 'border-[#e5e7eb] bg-white text-rose-500 hover:bg-rose-50'
                                             }`}
                                             disabled={activeCategoryMetrics.inUse}
                                         >

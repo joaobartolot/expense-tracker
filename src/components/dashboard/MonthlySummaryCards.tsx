@@ -7,32 +7,32 @@ interface MonthlySummaryCardsProps {
     spent: number;
     earned: number;
     currency: Currency;
-    cycleLabel: string;
+    periodLabel: string;
 }
 
 export function MonthlySummaryCards({
     spent,
     earned,
     currency,
-    cycleLabel,
+    periodLabel,
 }: MonthlySummaryCardsProps) {
     const cards = [
         {
-            title: 'Spent This Cycle',
+            title: 'Spent This Period',
             value: formatMoney(spent, currency),
             Icon: ArrowUpRight,
             valueClassName: 'text-rose-500',
             iconClassName: 'bg-rose-50 text-rose-500',
         },
         {
-            title: 'Earned This Cycle',
+            title: 'Earned This Period',
             value: formatMoney(earned, currency),
             Icon: ArrowDownRight,
             valueClassName: 'text-emerald-600',
             iconClassName: 'bg-emerald-50 text-emerald-600',
         },
         {
-            title: 'Cycle Net',
+            title: 'Net This Period',
             value: formatMoney(earned - spent, currency),
             Icon: Wallet,
             valueClassName: 'text-slate-900',
@@ -43,7 +43,7 @@ export function MonthlySummaryCards({
     return (
         <section className="grid gap-4 md:grid-cols-3">
             {cards.map(({ title, value, Icon, valueClassName, iconClassName }) => (
-                <Card key={title} title={title} subtitle={cycleLabel}>
+                <Card key={title} title={title} subtitle={periodLabel}>
                     <div className="flex items-end justify-between gap-4">
                         <p className={`text-3xl font-semibold tracking-tight ${valueClassName}`}>
                             {value}

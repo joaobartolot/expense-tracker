@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { AppHeader } from '../../components/common/AppHeader';
+import { useState } from 'react';
 import { Modal } from '../../components/common/Modal';
 import { MonthlySummaryCards } from '../../components/dashboard/MonthlySummaryCards';
 import { NetWorthTrendChart } from '../../components/dashboard/NetWorthTrendChart';
@@ -8,16 +7,15 @@ import { RecentTransactions } from '../../components/dashboard/RecentTransaction
 import { SpendingByCategoryChart } from '../../components/dashboard/SpendingByCategoryChart';
 import { TransactionEditor } from '../../components/forms/TransactionEditor';
 import { TransactionOverviewModal } from '../../components/transactions/TransactionOverviewModal';
-import { formatMoney } from '../../utils/currency';
 import type {
-    Account,
-    Category,
-    Currency,
-    NetWorthPoint,
-    NormalizedTransaction,
-    RecentTransactionGroups,
-    SpendingByCategoryEntry,
-    Transaction,
+	Account,
+	Category,
+	Currency,
+	NetWorthPoint,
+	NormalizedTransaction,
+	RecentTransactionGroups,
+	SpendingByCategoryEntry,
+	Transaction,
 } from '../../types/finance';
 
 interface HomePageProps {
@@ -31,8 +29,6 @@ interface HomePageProps {
     recentTransactionGroups: RecentTransactionGroups;
     spendingByCategory: SpendingByCategoryEntry[];
     netWorthTrend: NetWorthPoint[];
-    transactionCount: number;
-    recurringCount: number;
     onCreateTransaction: (transaction: Omit<Transaction, 'id'>) => void;
     onUpdateTransaction: (transaction: Transaction) => void;
     onDeleteTransaction: (transactionId: string) => void;
@@ -49,8 +45,6 @@ export function HomePage({
     recentTransactionGroups,
     spendingByCategory,
     netWorthTrend,
-    transactionCount,
-    recurringCount,
     onCreateTransaction,
     onUpdateTransaction,
     onDeleteTransaction,
@@ -63,37 +57,11 @@ export function HomePage({
 
     return (
         <div className="space-y-6">
-            <AppHeader
-                eyebrow="Home"
-                title="Your finance home"
-                description={`The balance stays at the top, with your main budget-cycle signals for ${currentBudgetCycleLabel} and latest activity underneath.`}
-                meta={
-                    <>
-                        <div className="rounded-2xl bg-white/10 px-4 py-3">
-                            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                                Total balance
-                            </p>
-                            <p className="mt-1 text-lg font-semibold text-white">
-                                {formatMoney(balance, defaultCurrency)}
-                            </p>
-                        </div>
-                        <div className="rounded-2xl bg-white/10 px-4 py-3">
-                            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                                Activity
-                            </p>
-                            <p className="mt-1 text-sm font-semibold text-white">
-                                {transactionCount} transactions • {recurringCount} recurring
-                            </p>
-                        </div>
-                    </>
-                }
-            />
-
             <MonthlySummaryCards
                 spent={currentCycleSpent}
                 earned={currentCycleEarned}
                 currency={defaultCurrency}
-                cycleLabel={currentBudgetCycleLabel}
+                periodLabel={currentBudgetCycleLabel}
             />
 
             <section className="grid gap-6 xl:grid-cols-[1.35fr_0.95fr]">
@@ -108,7 +76,7 @@ export function HomePage({
                         <button
                             type="button"
                             onClick={() => setIsCreateOpen(true)}
-                            className="rounded-2xl border border-app-line bg-white p-2 text-brand-500 transition hover:border-brand-100 hover:bg-brand-50"
+                            className="app-icon-button text-brand-500 hover:border-brand-100 hover:bg-brand-50"
                             aria-label="Add transaction"
                         >
                             <Plus className="h-4 w-4" />
@@ -123,7 +91,7 @@ export function HomePage({
                         data={spendingByCategory}
                         spent={currentCycleSpent}
                         defaultCurrency={defaultCurrency}
-                        cycleLabel={currentBudgetCycleLabel}
+                        periodLabel={currentBudgetCycleLabel}
                     />
                     <NetWorthTrendChart points={netWorthTrend} />
                 </div>

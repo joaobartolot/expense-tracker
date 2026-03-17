@@ -6,19 +6,19 @@ interface SpendingByCategoryChartProps {
     data: SpendingByCategoryEntry[];
     spent: number;
     defaultCurrency: Currency;
-    cycleLabel: string;
+    periodLabel: string;
 }
 
 export function SpendingByCategoryChart({
     data,
     spent,
     defaultCurrency,
-    cycleLabel,
+    periodLabel,
 }: SpendingByCategoryChartProps) {
     return (
         <Card
             title="Spending by Category"
-            subtitle={`See where this cycle is going at a glance. (${cycleLabel})`}
+            subtitle={`See where your money is going this period. (${periodLabel})`}
         >
             <div className="space-y-4">
                 {data.map(([name, value]) => (
@@ -44,7 +44,7 @@ export function SpendingByCategoryChart({
 
                 {!data.length && (
                     <p className="rounded-2xl bg-slate-50 px-4 py-6 text-sm text-slate-500">
-                        No spending data in this cycle.
+                        No spending data yet for this period.
                     </p>
                 )}
             </div>

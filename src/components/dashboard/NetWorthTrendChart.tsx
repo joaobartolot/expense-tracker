@@ -14,7 +14,7 @@ export function NetWorthTrendChart({ points }: NetWorthTrendChartProps) {
     return (
         <Card
             title="Net Worth Trend"
-            subtitle="Last six budget cycles in your default currency."
+            subtitle="Last six periods in your default currency."
         >
             <div className="flex h-44 items-end gap-3">
                 {points.map((point) => (

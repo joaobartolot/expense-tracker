@@ -104,7 +104,7 @@ export function RecurringTransactionsPanel({
     return (
         <Card
             title="Recurring Transactions"
-            subtitle="Automate the transfers and expenses you expect every cycle."
+            subtitle="Automate the transfers and expenses you expect each period."
             actions={
                 <button
                     type="button"

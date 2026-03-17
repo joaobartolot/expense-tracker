@@ -107,7 +107,7 @@ export function TransactionOverviewModal({
                         <button
                             type="button"
                             onClick={() => onDelete(transaction.id)}
-                            className="rounded-2xl border border-rose-100 bg-white px-4 py-3 text-sm font-semibold text-rose-500 transition hover:bg-rose-50"
+                            className="app-button-secondary text-rose-500 hover:bg-rose-50 hover:text-rose-500"
                         >
                             <Trash2 className="mr-2 inline h-4 w-4" />
                             Delete

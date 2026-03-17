@@ -28,7 +28,7 @@ export function SettingsPanel({
     return (
         <Card
             title="Settings"
-            subtitle="Choose how balances are normalized and how each budget cycle is grouped."
+            subtitle="Choose how balances are normalized and how each budget period is grouped."
         >
             <label
                 htmlFor="default-currency"
@@ -62,7 +62,7 @@ export function SettingsPanel({
                 className="mt-6 mb-2 flex items-center gap-2 text-sm font-medium text-slate-700"
             >
                 <CalendarRange className="h-4 w-4 text-brand-500" />
-                Budget cycle start day
+                Budget period start day
             </label>
             <select
                 id="budget-cycle-start-day"
@@ -80,8 +80,8 @@ export function SettingsPanel({
             </select>
 
             <p className="mt-4 text-sm text-slate-500">
-                Use the day your pay cycle starts. If a month is shorter than
-                that day, the cycle rolls over on the last day of that month.
+                Use the day your pay period starts. If a month is shorter than
+                that day, the period rolls over on the last day of that month.
             </p>
 
             <div className="mt-5 rounded-2xl bg-slate-50 px-4 py-3">

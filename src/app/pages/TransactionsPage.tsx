@@ -118,7 +118,7 @@ export function TransactionsPage({
                                             onClick={() =>
                                                 setViewingTransaction(transaction)
                                             }
-                                            className="app-button-secondary px-3 py-2"
+                                            className="app-icon-button"
                                         >
                                             <Eye className="h-4 w-4" />
                                         </button>
@@ -127,7 +127,7 @@ export function TransactionsPage({
                                             onClick={() =>
                                                 setEditingTransaction(transaction)
                                             }
-                                            className="app-button-secondary px-3 py-2"
+                                            className="app-icon-button"
                                         >
                                             <Pencil className="h-4 w-4" />
                                         </button>
@@ -136,7 +136,7 @@ export function TransactionsPage({
                                             onClick={() =>
                                                 onDeleteTransaction(transaction.id)
                                             }
-                                            className="rounded-2xl border border-rose-100 bg-white px-3 py-2 text-rose-500 transition hover:bg-rose-50"
+                                            className="app-icon-button text-rose-500 hover:bg-rose-50"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </button>
